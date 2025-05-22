@@ -25,42 +25,54 @@
    \__________________/                 |______|______|                                    
 ```
 
-An open-source portfolio analysis and optimization system powered by Claude AI and Cursor.
+Your AI-powered investment advisory system providing comprehensive portfolio analysis, personalized recommendations, and strategic financial guidance.
 
 ## Overview
 
-Portfolio Intelligence combines market data from Zerodha's Kite API with advanced AI analysis from Claude to provide deep insights into your investment portfolio. The system helps you make data-driven decisions by:
+Portfolio Intelligence delivers the capabilities of a professional investment advisor through advanced AI analytics. By combining real-time market data with Claude AI's sophisticated reasoning, the system provides personalized investment guidance tailored to your unique financial situation:
 
-- Analyzing your current holdings and positions
-- Monitoring market movements and relevant news
-- Generating actionable insights and optimization recommendations
-- Providing alerts for significant portfolio events
+- **Complete Portfolio Assessment**: Thorough analysis of holdings, positions, and performance metrics
+- **Strategic Asset Allocation**: Optimized asset distribution based on your risk tolerance and goals
+- **Tax-Efficient Recommendations**: Suggestions that consider tax implications of investment decisions
+- **Opportunity Identification**: Discovery of undervalued assets and timely entry/exit points
+- **Risk Management**: Proactive alerts and hedging strategies to protect your capital
 
-## Features
+## Advanced Advisory Features
 
-### 1. Portfolio Analysis
-- Comprehensive portfolio valuation and P&L tracking
-- Sector-wise allocation analysis
-- Performance metrics (returns, Sharpe ratio, volatility)
-- Risk assessment and diversification measurement
+### 1. Personalized Investment Strategy
+- Goal-based portfolio construction and optimization
+- Retirement planning and wealth accumulation models
+- Investment horizon and liquidity requirement analysis
+- Periodic rebalancing recommendations based on life events
+- Custom risk tolerance profiling and portfolio alignment
 
-### 2. Market Monitoring
-- Real-time tracking of key market indices
-- Monitoring of stocks in your portfolio
-- News aggregation and sentiment analysis
-- Correlation with your portfolio holdings
+### 2. Comprehensive Financial Analysis
+- Multi-factor performance attribution analysis
+- Advanced correlation and diversification metrics
+- Stress testing against historical market scenarios
+- Drawdown analysis and recovery projections
+- Risk-adjusted return optimization (Sharpe, Sortino, Treynor ratios)
 
-### 3. AI-Powered Insights
-- Advanced portfolio optimization recommendations
-- Actionable trade suggestions based on market conditions
-- Risk management advice
-- Long-term strategy alignment
+### 3. AI-Powered Market Intelligence
+- Sentiment analysis of news, earnings calls, and social media
+- Pattern recognition for technical analysis signals
+- Macroeconomic indicator monitoring and impact assessment
+- Sector rotation recommendations based on economic cycles
+- Alternative data integration for unique insights
 
-### 4. Reporting and Visualization
-- Detailed portfolio reports
-- Performance visualization
-- Sector allocation charts
-- Historical trend analysis
+### 4. Strategic Planning Tools
+- Tax-loss harvesting opportunities
+- Dividend optimization strategies
+- Inflation-adjusted performance projections
+- Currency exposure analysis and hedging suggestions
+- Retirement withdrawal strategy optimization
+
+### 5. Advanced Reporting & Visualization
+- Interactive performance dashboards
+- Portfolio composition heatmaps
+- Risk exposure visualization
+- Historical scenario comparison
+- Goal progress tracking
 
 ## Getting Started
 
@@ -88,51 +100,52 @@ export KITE_API_KEY="your_api_key"
 export KITE_API_SECRET="your_api_secret"
 ```
 
-### Usage
+### Advisor Usage
 
-#### Basic Portfolio Analysis
+#### Portfolio Strategy Assessment
 ```
-python main.py --analyze
-```
-
-#### Generate AI Insights Report
-```
-python main.py --report
+python main.py --strategy-assessment --risk-profile moderate
 ```
 
-#### Monitor Market with Alerts
+#### Retirement Planning Analysis
 ```
-python main.py --monitor --time 60
-```
-
-#### Get Insights for a Specific Stock
-```
-python main.py --stock INFY
+python main.py --retirement-plan --target-age 60 --monthly-contribution 50000
 ```
 
-#### Combining Operations
+#### Tax Optimization Recommendations
 ```
-python main.py --refresh --analyze --report
+python main.py --tax-optimize --tax-bracket 30
+```
+
+#### Portfolio Health Check
+```
+python main.py --health-check --full-report
+```
+
+#### Personal Finance Dashboard
+```
+python main.py --dashboard --live
 ```
 
 ## Architecture
 
-The system consists of four main components:
+The AI investment advisory system consists of five main components:
 
-1. **Portfolio Analyzer**: Connects to Kite API, fetches holdings/positions, and performs quantitative analysis.
-2. **Market Monitor**: Tracks market movements, indices, and news relevant to your portfolio.
-3. **Claude Insights**: Integrates with Claude AI to generate advanced insights and recommendations.
-4. **Configuration**: Manages settings, sector mappings, and user preferences.
+1. **Portfolio Analyzer**: Evaluates current holdings, calculates performance metrics, and identifies patterns.
+2. **Market Intelligence**: Tracks market movements, aggregates news, and monitors macroeconomic indicators.
+3. **Strategy Engine**: Develops personalized investment strategies based on goals and risk tolerance.
+4. **Claude AI Advisor**: Provides natural language insights, recommendations, and answers investment questions.
+5. **Financial Planning Suite**: Offers retirement planning, tax optimization, and goal-based investing tools.
 
-## Contributing
+## Ethical Investment Advisory
 
-We welcome contributions! Please follow these steps:
+Portfolio Intelligence adheres to fiduciary principles in its recommendations:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- **Transparency**: All analysis methods and data sources are documented
+- **Client-First Recommendations**: Optimized for your financial well-being, not commissions
+- **Risk Disclosure**: Clear communication of potential downside scenarios
+- **Regulatory Compliance**: Designed to meet applicable financial advisory regulations
+- **Privacy Protection**: Your financial data remains secure and confidential
 
 ## License
 
@@ -146,4 +159,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Disclaimer
 
-This software is for educational and informational purposes only. It does not constitute financial advice. Always conduct your own research before making investment decisions. 
+While Portfolio Intelligence provides sophisticated investment analysis and recommendations, it should be used as a supplementary tool alongside professional financial advice. The system does not guarantee investment performance and all financial decisions should be made after careful consideration of your individual circumstances. 
