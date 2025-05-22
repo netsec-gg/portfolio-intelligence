@@ -27,8 +27,6 @@
 
 An open-source portfolio analysis and optimization system powered by Claude AI and Cursor.
 
-![Portfolio Intelligence](https://netsec.gg/assets/img/portfolio-intelligence-banner.png)
-
 ## Overview
 
 Portfolio Intelligence combines market data from Zerodha's Kite API with advanced AI analysis from Claude to provide deep insights into your investment portfolio. The system helps you make data-driven decisions by:
