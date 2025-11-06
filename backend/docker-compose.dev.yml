@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: portify-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portify
+      POSTGRES_USER: portify
+      POSTGRES_PASSWORD: portify_dev_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - portify-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portify -d portify"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Portify Application (Development)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: portify-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      # Database (override .env.local if needed)
+      DATABASE_URL: postgresql://portify:portify_dev_password@postgres:5432/portify
+      
+      # Application
+      NODE_ENV: development
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: 1
+      
+      # API Keys (can be set in .env.local)
+      KITE_API_KEY: ${KITE_API_KEY:-}
+      KITE_API_SECRET: ${KITE_API_SECRET:-}
+      NEWS_API_KEY: ${NEWS_API_KEY:-}
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      
+      # Logging
+      LOG_LEVEL: debug
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+      # Mount kite-config.json if it exists
+      - ./kite-config.json:/app/kite-config.json:ro
+    networks:
+      - portify-network
+    command: npm run dev
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  portify-network:
+    driver: bridge
+

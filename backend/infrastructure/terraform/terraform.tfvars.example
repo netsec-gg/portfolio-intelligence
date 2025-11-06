@@ -1,0 +1,51 @@
+# General Configuration
+project_name = "portify"
+environment  = "production"
+aws_region   = "us-east-1"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+
+# Database Configuration
+db_instance_class        = "db.t3.micro"  # Use db.t3.small or larger for production
+db_allocated_storage     = 20
+db_max_allocated_storage = 100
+db_name                  = "portify"
+db_username              = "portify_user"
+db_password              = "your-secure-database-password-here"
+
+# Redis Configuration
+redis_node_type  = "cache.t3.micro"  # Use cache.t3.small or larger for production
+redis_auth_token = "your-secure-redis-auth-token-here"
+
+# ECS Configuration
+ecs_cpu           = 256   # 256 (.25 vCPU) or 512 (.5 vCPU) for production
+ecs_memory        = 512   # 512 MB or 1024 MB for production
+ecs_desired_count = 2     # Number of running tasks
+ecs_min_capacity  = 1     # Minimum tasks for auto-scaling
+ecs_max_capacity  = 10    # Maximum tasks for auto-scaling
+
+# Application Secrets
+jwt_secret       = "your-jwt-secret-key-here-make-it-long-and-random"
+openai_api_key   = "sk-your-openai-api-key-here"
+kite_api_key     = "your-kite-api-key-here"
+kite_api_secret  = "your-kite-api-secret-here"
+
+# Messaging Platform Configuration (Optional - leave empty if not using)
+slack_bot_token      = "xoxb-your-slack-bot-token-here"
+slack_signing_secret = "your-slack-signing-secret-here"
+telegram_bot_token   = "your-telegram-bot-token-here"
+whatsapp_access_token     = "your-whatsapp-access-token-here"
+whatsapp_phone_number_id  = "your-whatsapp-phone-number-id-here"
+whatsapp_verify_token     = "your-whatsapp-verify-token-here"
+
+# GitHub Configuration (for CI/CD)
+github_repo = "your-username/portify"
+
+# Feature Flags
+enable_cloudfront = false
+enable_waf        = false
+
+# Domain Configuration (Optional)
+domain_name     = ""  # e.g., "api.yourdomain.com"
+certificate_arn = ""  # ACM certificate ARN for HTTPS 

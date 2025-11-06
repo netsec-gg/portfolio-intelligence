@@ -1,0 +1,74 @@
+# Example Terraform variables file for Portify deployment
+# Copy this file to terraform.tfvars and update with your actual values
+
+# Basic Configuration
+aws_region   = "us-east-1"
+project_name = "portify"
+environment  = "development"  # development, staging, or production
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+
+# ECS Configuration
+fargate_cpu    = 512   # 256, 512, 1024, 2048, 4096
+fargate_memory = 1024  # Must be compatible with CPU
+app_count      = 2     # Number of containers to run
+
+# Database Configuration
+rds_instance_class = "db.t3.micro"  # db.t3.micro, db.t3.small, db.t3.medium, etc.
+db_name            = "portify"
+db_username        = "portify_user"
+db_password        = "your-secure-database-password-here"  # At least 8 characters
+
+# Redis Configuration
+redis_node_type = "cache.t3.micro"  # cache.t3.micro, cache.t3.small, etc.
+
+# Application Secrets (Required)
+jwt_secret       = "your-jwt-secret-key-at-least-32-characters-long"
+openai_api_key   = "sk-your-openai-api-key-here"
+kite_api_key     = "your-kite-api-key-here"
+kite_api_secret  = "your-kite-api-secret-here"
+
+# Optional: Slack Integration
+slack_bot_token      = ""  # xoxb-your-slack-bot-token
+slack_signing_secret = ""  # your-slack-signing-secret
+
+# Optional: Telegram Integration
+telegram_bot_token = ""  # your-telegram-bot-token
+
+# Optional: WhatsApp Integration
+whatsapp_phone_number_id      = ""  # your-whatsapp-phone-number-id
+whatsapp_access_token         = ""  # your-whatsapp-access-token
+whatsapp_webhook_verify_token = ""  # your-whatsapp-webhook-verify-token
+
+# Optional: Domain Configuration
+domain_name     = ""  # your-domain.com (optional)
+certificate_arn = ""  # arn:aws:acm:region:account:certificate/cert-id (optional)
+
+# Monitoring Configuration
+enable_detailed_monitoring = false
+log_retention_days         = 30
+
+# Backup Configuration
+backup_retention_period = 7  # Days to retain database backups
+
+# Auto Scaling Configuration
+min_capacity             = 1
+max_capacity             = 10
+target_cpu_utilization   = 70
+
+# Cost Optimization
+enable_spot_instances     = false  # Enable for cost savings (development only)
+spot_allocation_strategy  = "diversified"
+
+# Security Configuration
+enable_container_insights = true
+enable_execute_command    = false  # Enable for debugging (development only)
+
+# Additional Tags (Optional)
+additional_tags = {
+  Owner       = "your-name"
+  Team        = "your-team"
+  CostCenter  = "your-cost-center"
+  Environment = "development"
+} 

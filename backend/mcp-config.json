@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "financial-data": {
+      "command": "node",
+      "args": ["financial-mcp-server.js"],
+      "cwd": "/Users/dmeg/portify/backend"
+    },
+    "kite-mcp": {
+      "command": "node",
+      "args": ["kite-mcp-server.js"],
+      "cwd": "/Users/dmeg/portify/backend"
+    }
+  }
+} 

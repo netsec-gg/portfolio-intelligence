@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #1A1A1A;
+  color: #00FF80;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 60s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* Netsec.gg Color Scheme - Dark Theme */
+.neon-green {
+  color: #00FF80;
+  text-shadow: 0 0 10px #00FF80, 0 0 20px #00FF80;
+}
+
+.neon-green-text {
+  color: #00FF80;
+}
+
+.neon-pink {
+  color: #FF6699;
+}
+
+.neon-red {
+  color: #EF4444;
+}
+
+.neon-border-green {
+  border-color: #00FF80;
+}
+
+.neon-bg-dark {
+  background-color: #1A1A1A;
+}
+
+.neon-bg-card {
+  background-color: #222225;
+  border: 1px solid #00FF80;
+}
+
+.neon-bg-button {
+  background-color: transparent;
+  border: 1px solid #00FF80;
+  color: #00FF80;
+  transition: all 0.3s ease;
+}
+
+.neon-bg-button:hover {
+  background-color: #00FF80;
+  color: #1A1A1A;
+  box-shadow: 0 0 20px #00FF80;
+}
+
+.neon-bg-button-selected {
+  background-color: #00FF80;
+  color: #1A1A1A;
+  border: 1px solid #00FF80;
+}
+
+.neon-bg-button-selected:hover {
+  background-color: #00E676;
+  box-shadow: 0 0 20px #00FF80;
+}
+
+@keyframes glow {
+  0%, 100% {
+    text-shadow: 0 0 10px #00FF80, 0 0 20px #00FF80;
+  }
+  50% {
+    text-shadow: 0 0 20px #00FF80, 0 0 30px #00FF80;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px #00FF80, 0 0 10px #00FF80;
+  }
+  50% {
+    box-shadow: 0 0 10px #00FF80, 0 0 20px #00FF80;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out;
+}
+
+.neon-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.neon-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Netsec.gg Background - Dark */
+.netsec-bg {
+  background: #1A1A1A;
+  position: relative;
+}
+
