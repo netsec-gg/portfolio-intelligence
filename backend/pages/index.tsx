@@ -99,6 +99,8 @@ export default function Dashboard() {
   const sentNotificationsToday = useRef<Set<string>>(new Set());
   const lastNotificationEvaluation = useRef<number>(0);
   const shownNotificationIds = useRef<Set<string>>(new Set()); // Track shown notifications in current session
+  const portfolioIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const authRedirectAttempted = useRef(false);
 
   useEffect(() => {
     checkAuth();
@@ -174,154 +176,233 @@ export default function Dashboard() {
       
       fetchPublicData();
       
+      // Update ticker every 300ms (3 times per second) to match Zerodha Kite frequency - works without auth
+      const tickerInterval = setInterval(() => {
+        // Fetch ticker even without token for public data
+        const tickerUrl = kiteToken 
+          ? `/api/market/ticker?token=${encodeURIComponent(kiteToken)}&_t=${Date.now()}`
+          : `/api/market/ticker?_t=${Date.now()}`;
+        
+        fetch(tickerUrl)
+          .then(res => res.ok ? res.json() : null)
+          .then(tickerData => {
+            if (tickerData?.ticker) {
+              const priceItems = tickerData.ticker.filter((t: any) => t.type === 'price') || [];
+              const newTicker = priceItems.map((t: any) => ({
+                symbol: t.symbol || '',
+                price: parseFloat(t.value?.replace('₹', '').replace(',', '') || '0') || 0,
+                change: t.change || 0,
+                changePercent: t.changePercent || 0,
+                _timestamp: Date.now() // Add timestamp for force update
+              })).slice(0, 20);
+              setTicker(prev => {
+                // Force update to trigger re-render - always return new array
+                return [...newTicker];
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching ticker:', error);
+          });
+      }, 300); // 300ms = 3 times per second (Zerodha Kite frequency)
+      
       if (authenticated && kiteToken) {
         console.log('Starting fetchData and setting up intervals');
         fetchData();
         
-        // Update ticker every 1 second for ultra-real-time updates (like Tickertape)
-        const tickerInterval = setInterval(() => {
-          if (kiteToken) {
-            fetch(`/api/market/ticker?token=${encodeURIComponent(kiteToken)}`)
-              .then(res => res.ok ? res.json() : null)
-              .then(tickerData => {
-                if (tickerData?.ticker) {
-                  const priceItems = tickerData.ticker.filter((t: any) => t.type === 'price') || [];
-                  const newTicker = priceItems.map((t: any) => ({
-                    symbol: t.symbol || '',
-                    price: parseFloat(t.value?.replace('₹', '').replace(',', '') || '0') || 0,
-                    change: t.change || 0,
-                    changePercent: t.changePercent || 0,
-                  })).slice(0, 20);
-                  setTicker(prev => {
-                    // Force update to trigger re-render
-                    return [...newTicker];
-                  });
+        // Update portfolio summary every 500ms (2 times per second) to match Zerodha frequency
+        portfolioIntervalRef.current = setInterval(() => {
+          if (kiteToken && !authRedirectAttempted.current) {
+            fetch(`/api/portfolio/overview?token=${encodeURIComponent(kiteToken)}&_t=${Date.now()}`)
+              .then(async (res) => {
+                // Always read JSON, even for error responses
+                const data = await res.json().catch(() => ({}));
+                
+                // Check for 401 or auth errors
+                if (res.status === 401 || (data.error && data.authUrl)) {
+                  console.warn('Authentication required:', data.error || 'Unauthorized');
+                  // Only redirect once to avoid redirect loops
+                  if (!window.location.href.includes('/api/oauth/authorize') && !window.location.href.includes('/oauth') && !authRedirectAttempted.current) {
+                    authRedirectAttempted.current = true;
+                    // Clear the interval first
+                    if (portfolioIntervalRef.current) {
+                      clearInterval(portfolioIntervalRef.current);
+                      portfolioIntervalRef.current = null;
+                    }
+                    alert('Your session has expired. Please re-authenticate to view your portfolio.');
+                    window.location.href = '/api/oauth/authorize';
+                  }
+                  return null;
                 }
+                
+                if (!res.ok) {
+                  console.error('Portfolio API error:', res.status, res.statusText, data);
+                  return null;
+                }
+                
+                return data;
               })
-              .catch(() => {});
-          }
-        }, 1000);
-        
-        // Update portfolio summary every 1 second for real-time updates
-        const portfolioInterval = setInterval(() => {
-          if (kiteToken) {
-            fetch(`/api/portfolio/overview?token=${encodeURIComponent(kiteToken)}`)
-              .then(res => res.ok ? res.json() : null)
               .then(portfolioData => {
                 if (portfolioData && !portfolioData.error) {
-                  setPortfolioSummary({
-                    totalValue: portfolioData.totalValue || 0,
-                    totalPnL: portfolioData.totalPnL || 0,
-                    totalPnLPercent: portfolioData.totalPnLPercent || 0,
-                    dayChange: portfolioData.dayChange || 0,
-                    dayChangePercent: portfolioData.dayChangePercent || 0,
+                  setPortfolioSummary(prev => {
+                    // Always update to ensure real-time changes are reflected
+                    const newData = {
+                      totalValue: portfolioData.totalValue || 0,
+                      totalPnL: portfolioData.totalPnL || 0,
+                      totalPnLPercent: portfolioData.totalPnLPercent || 0,
+                      dayChange: portfolioData.dayChange || 0,
+                      dayChangePercent: portfolioData.dayChangePercent || 0,
+                    };
+                    // Force update even if values appear same (to trigger re-render)
+                    return newData;
                   });
+                  
+                  if (portfolioData.message) {
+                    console.log('Portfolio message:', portfolioData.message);
+                  }
                 }
               })
-              .catch(() => {});
+              .catch((error) => {
+                console.error('Error fetching portfolio:', error);
+              });
           }
-        }, 1000);
-        
-        return () => {
-          clearInterval(tickerInterval);
-          clearInterval(portfolioInterval);
-        };
+        }, 500); // 500ms = 2 times per second (Zerodha portfolio update frequency)
       }
       
-      // Update indices every 1 second for ultra-real-time (like Tickertape)
+      // Update indices every 500ms (2 times per second) to match Zerodha frequency
       const indicesInterval = setInterval(() => {
-        fetch('/api/market/indices')
+        fetch(`/api/market/indices?_t=${Date.now()}`)
           .then(res => res.ok ? res.json() : null)
           .then(indicesData => {
             if (indicesData) {
               if (indicesData.nifty50) {
                 setNifty50(prev => {
-                  // Only update if value changed to trigger re-render
-                  if (prev.value !== indicesData.nifty50.value) {
-                    console.log('Nifty50 updated:', indicesData.nifty50.value);
-                    return indicesData.nifty50;
+                  // Always update for real-time changes - force update even if values appear same
+                  const newData = indicesData.nifty50;
+                  // Always return new data to trigger re-render
+                  if (prev.value !== newData.value || prev.change !== newData.change || prev.changePercent !== newData.changePercent) {
+                    console.log('Nifty50 updated:', newData.value, 'change:', newData.change);
+                    return newData;
                   }
-                  return prev;
+                  // Force update with new object reference to trigger re-render
+                  return { ...newData, _timestamp: Date.now() };
                 });
               }
               if (indicesData.sensex) {
                 setSensex(prev => {
-                  if (prev.value !== indicesData.sensex.value) {
-                    console.log('Sensex updated:', indicesData.sensex.value);
-                    return indicesData.sensex;
+                  const newData = indicesData.sensex;
+                  // Always return new data to trigger re-render
+                  if (prev.value !== newData.value || prev.change !== newData.change || prev.changePercent !== newData.changePercent) {
+                    console.log('Sensex updated:', newData.value, 'change:', newData.change);
+                    return newData;
                   }
-                  return prev;
+                  // Force update with new object reference to trigger re-render
+                  return { ...newData, _timestamp: Date.now() };
                 });
               }
             }
           })
           .catch(() => {});
-      }, 1000);
+      }, 500); // 500ms = 2 times per second (Zerodha indices update frequency)
       
-      // Update today's stocks every 1 second for real-time price updates
+      // Update today's stocks every 300ms (3 times per second) to match Zerodha stock price frequency
       const stocksInterval = setInterval(() => {
-        fetch('/api/market/today-stocks')
+        fetch(`/api/market/today-stocks?_t=${Date.now()}`)
           .then(res => res.ok ? res.json() : null)
           .then(stocksData => {
             if (stocksData) {
               setTodayStocks(prev => {
-                // Force update to trigger re-render
-                return { ...stocksData };
+                // Force update to trigger re-render - always create new object
+                const newData = {
+                  gainers: stocksData.gainers || [],
+                  losers: stocksData.losers || [],
+                  mostActive: stocksData.mostActive || [],
+                  near52WHigh: stocksData.near52WHigh || [],
+                  near52WLow: stocksData.near52WLow || [],
+                  _timestamp: Date.now() // Add timestamp to force update
+                };
+                return newData;
               });
             }
           })
-          .catch(() => {});
-      }, 1000);
+          .catch((error) => {
+            console.error('Error fetching today stocks:', error);
+          });
+      }, 300); // 300ms = 3 times per second (Zerodha stock price update frequency)
       
-      // Update news, FII, mood every 1 second for real-time updates
+      // Update FII/DII and mood every 1 second (less critical than prices)
       const publicDataInterval = setInterval(() => {
-        console.log('Updating public data...');
-        
-        fetch('/api/news/events')
-          .then(res => res.ok ? res.json() : null)
-          .then(newsData => {
-            if (newsData?.events && Array.isArray(newsData.events)) {
-              console.log(`Updating news: ${newsData.events.length} events`);
-              setNewsEvents(newsData.events);
-            }
-          })
-          .catch(() => {});
-        
-        fetch('/api/market/intelligence')
+        // Update FII/DII
+        fetch(`/api/market/intelligence?_t=${Date.now()}`)
           .then(res => res.ok ? res.json() : null)
           .then(intelData => {
             if (intelData?.fiiDii?.fii) {
-              setFiiDiiData({
-                type: 'FII',
-                buy: intelData.fiiDii.fii.buy || 0,
-                sell: intelData.fiiDii.fii.sell || 0,
-                net: intelData.fiiDii.fii.net || 0,
+              setFiiDiiData(prev => {
+                const newData = {
+                  type: 'FII' as const,
+                  buy: intelData.fiiDii.fii.buy || 0,
+                  sell: intelData.fiiDii.fii.sell || 0,
+                  net: intelData.fiiDii.fii.net || 0,
+                };
+                // Force update even if values appear same
+                return newData;
               });
             }
           })
-          .catch(() => {});
+          .catch((error) => {
+            console.error('Error fetching FII/DII:', error);
+          });
         
-        fetch('/api/market/mood')
+        // Update market mood
+        fetch(`/api/market/mood?_t=${Date.now()}`)
           .then(res => res.ok ? res.json() : null)
           .then(moodData => {
             if (moodData?.mood) {
-              setMarketMood(moodData.mood);
+              setMarketMood(prev => {
+                // Force update with new object reference
+                return { ...moodData.mood, _timestamp: Date.now() };
+              });
             }
           })
-          .catch(() => {});
-      }, 1000);
+          .catch((error) => {
+            console.error('Error fetching market mood:', error);
+          });
+      }, 1000); // 1 second for FII/DII and mood (less critical than prices)
       
-      // Update full data every 10 seconds if authenticated
+      // Update news every 5 seconds (news doesn't change as frequently)
+      const newsInterval = setInterval(() => {
+        fetch(`/api/news/events?_t=${Date.now()}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(newsData => {
+            if (newsData?.events && Array.isArray(newsData.events)) {
+              setNewsEvents(prev => {
+                // Force update - always return new array
+                return [...newsData.events];
+              });
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching news:', error);
+          });
+      }, 5000); // 5 seconds for news (doesn't need to be as frequent)
+      
+      // Update full data every 500ms if authenticated (matches Zerodha frequency)
       const fullInterval = authenticated && kiteToken ? setInterval(() => {
         fetchData();
-      }, 1000) : null;
+      }, 500) : null;
       
-        return () => {
-          clearInterval(indicesInterval);
-          clearInterval(stocksInterval);
-          clearInterval(publicDataInterval);
-          if (fullInterval) clearInterval(fullInterval);
-        };
+      return () => {
+        clearInterval(tickerInterval);
+        clearInterval(indicesInterval);
+        clearInterval(stocksInterval);
+        clearInterval(publicDataInterval);
+        clearInterval(newsInterval);
+        if (portfolioIntervalRef.current) {
+          clearInterval(portfolioIntervalRef.current);
+          portfolioIntervalRef.current = null;
+        }
+        if (fullInterval) clearInterval(fullInterval);
+      };
   }, [authenticated, kiteToken]);
 
   useEffect(() => {
@@ -1131,15 +1212,39 @@ export default function Dashboard() {
       };
 
       const handleTrade = async () => {
-        if (!tradeSymbol || !tradeQuantity || !kiteToken || tradeLoading) return;
+        if (!tradeSymbol || !tradeQuantity || tradeLoading) return;
 
         setTradeLoading(true);
         try {
+          // Try to get token if not available
+          let currentToken = kiteToken;
+          if (!currentToken) {
+            try {
+              const tokenResponse = await fetch('/api/auth/token');
+              if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json();
+                if (tokenData.token) {
+                  currentToken = tokenData.token;
+                  setKiteToken(tokenData.token);
+                }
+              }
+            } catch (e) {
+              console.error('Error fetching token:', e);
+            }
+          }
+
+          // If still no token, redirect to auth
+          if (!currentToken) {
+            alert('Please authenticate first. Redirecting to login...');
+            window.location.href = '/api/oauth/authorize';
+            return;
+          }
+
           const response = await fetch('/api/trade/place-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              token: kiteToken,
+              token: currentToken,
               symbol: tradeSymbol,
               exchange: 'NSE',
               quantity: parseInt(tradeQuantity),
@@ -1152,7 +1257,13 @@ export default function Dashboard() {
 
           const data = await response.json();
           if (data.error) {
-            alert(`Error: ${data.error}`);
+            // If error mentions auth, redirect to OAuth
+            if (data.error.includes('token') || data.error.includes('auth') || data.error.includes('api_key')) {
+              alert(`Authentication required: ${data.error}\nRedirecting to login...`);
+              window.location.href = '/api/oauth/authorize';
+            } else {
+              alert(`Error: ${data.error}`);
+            }
           } else {
             alert(`Success: ${data.message}`);
             setTradeModalOpen(false);
@@ -1206,7 +1317,7 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>Portify - Stock Market Dashboard</title>
+        <title>Portify - Portfolio Intelligence | Stock Market Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -1273,7 +1384,10 @@ export default function Dashboard() {
         {/* Header */}
         <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold neon-green neon-glow">PORTIFY</h1>
+            <div>
+              <h1 className="text-3xl font-bold neon-green neon-glow">PORTIFY</h1>
+              <p className="text-sm text-gray-400 mt-1">portfolio intelligence</p>
+            </div>
               <div className="flex items-center space-x-4">
               <button 
                 onClick={() => setTradeModalOpen(true)} 

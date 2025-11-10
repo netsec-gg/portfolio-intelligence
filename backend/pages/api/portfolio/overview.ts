@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchHoldings } from '../../../lib/mcp';
+import { fetchHoldings, fetchQuotes } from '../../../lib/mcp';
 import { logger } from '../../../lib/logger';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -62,9 +62,24 @@ export default async function handler(
       });
     }
 
-    const holdings = await fetchHoldings(kiteToken);
-    
-    if (!holdings || !Array.isArray(holdings)) {
+    let holdings: any[] = [];
+    try {
+      holdings = await fetchHoldings(kiteToken);
+      logger.info(`Fetched ${holdings.length} holdings for portfolio overview`);
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      logger.error('Error fetching holdings:', errorMsg);
+      
+      // If it's an auth error, return proper error response
+      if (errorMsg.includes('Session expired') || errorMsg.includes('invalid token') || errorMsg.includes('api_key') || errorMsg.includes('access_token')) {
+        return res.status(401).json({ 
+          error: 'Authentication failed. Please re-authenticate.',
+          authUrl: 'https://kite.zerodha.com/connect/login?v=3&api_key=f284nayjeebjjha0&redirect_url=http://localhost:3000/api/oauth/callback',
+          details: errorMsg
+        });
+      }
+      
+      // For other errors, return empty portfolio
       return res.status(200).json({
         totalValue: 0,
         totalInvested: 0,
@@ -73,7 +88,51 @@ export default async function handler(
         dayChange: 0,
         dayChangePercent: 0,
         positions: [],
+        error: 'Could not fetch holdings',
+        details: errorMsg
       });
+    }
+    
+    if (!holdings || !Array.isArray(holdings)) {
+      logger.warn('Holdings is not an array:', holdings);
+      return res.status(200).json({
+        totalValue: 0,
+        totalInvested: 0,
+        totalPnL: 0,
+        totalPnLPercent: 0,
+        dayChange: 0,
+        dayChangePercent: 0,
+        positions: [],
+        warning: 'No holdings data available'
+      });
+    }
+    
+    if (holdings.length === 0) {
+      logger.info('User has no holdings in portfolio');
+      return res.status(200).json({
+        totalValue: 0,
+        totalInvested: 0,
+        totalPnL: 0,
+        totalPnLPercent: 0,
+        dayChange: 0,
+        dayChangePercent: 0,
+        positions: [],
+        message: 'No holdings found. Your portfolio is empty.'
+      });
+    }
+
+    // Fetch fresh quotes for real-time prices
+    const instruments = holdings
+      .map((h: any) => `${h.exchange || 'NSE'}:${h.tradingsymbol}`)
+      .filter(Boolean);
+    
+    let quotes: any = {};
+    if (instruments.length > 0) {
+      try {
+        quotes = await fetchQuotes(kiteToken, instruments) || {};
+      } catch (e) {
+        logger.warn('Error fetching fresh quotes, using holdings data:', e);
+      }
     }
 
     let totalValue = 0;
@@ -82,13 +141,21 @@ export default async function handler(
     let dayChange = 0;
 
     const positions = holdings.map((holding: any) => {
-      const currentValue = (holding.last_price || 0) * (holding.quantity || 0);
+      // Use fresh quote data if available, otherwise fall back to holdings data
+      const instrumentKey = `${holding.exchange || 'NSE'}:${holding.tradingsymbol}`;
+      const quote = quotes[instrumentKey] || {};
+      
+      // Prefer fresh quote data for real-time prices
+      const lastPrice = quote.last_price || holding.last_price || 0;
+      const dayChangePrice = quote.net_change !== undefined ? quote.net_change : (holding.day_change || 0);
+      
+      const currentValue = lastPrice * (holding.quantity || 0);
       const investedValue = (holding.average_price || 0) * (holding.quantity || 0);
       const pnl = currentValue - investedValue;
       const pnlPercent = investedValue > 0 ? (pnl / investedValue) * 100 : 0;
-      const dayChangeAmount = (holding.day_change || 0) * (holding.quantity || 0);
-      const dayChangePercent = holding.last_price > 0 ? 
-        ((holding.day_change || 0) / holding.last_price) * 100 : 0;
+      const dayChangeAmount = dayChangePrice * (holding.quantity || 0);
+      const dayChangePercent = lastPrice > 0 ? 
+        (dayChangePrice / lastPrice) * 100 : 0;
 
       totalValue += currentValue;
       totalInvested += investedValue;
@@ -100,7 +167,7 @@ export default async function handler(
         exchange: holding.exchange || '',
         quantity: holding.quantity || 0,
         averagePrice: holding.average_price || 0,
-        lastPrice: holding.last_price || 0,
+        lastPrice,
         currentValue,
         investedValue,
         pnl,
@@ -123,6 +190,12 @@ export default async function handler(
       positions,
     };
 
+    // Prevent caching for real-time data
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Timestamp', Date.now().toString());
+    
     res.status(200).json(overview);
   } catch (err) {
     logger.error('Portfolio overview error:', err);

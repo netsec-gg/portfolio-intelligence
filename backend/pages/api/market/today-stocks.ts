@@ -126,6 +126,12 @@ export default async function handler(
         .sort((a, b) => a.changePercent - b.changePercent)
         .slice(0, 10);
 
+      // Prevent caching for real-time data
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('X-Timestamp', Date.now().toString());
+
       res.status(200).json({
         gainers,
         losers,

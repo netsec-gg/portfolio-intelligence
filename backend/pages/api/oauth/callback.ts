@@ -4,9 +4,9 @@ import crypto from 'crypto';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-// Hardcoded API keys for now
-const KITE_API_KEY = process.env.KITE_API_KEY || 'f284nayjeebjjha0';
-const KITE_API_SECRET = process.env.KITE_API_SECRET || 'wm1psj4mwwwxamopfck6iq08dr1vxf70';
+// Hardcoded API keys
+const KITE_API_KEY = 'f284nayjeebjjha0';
+const KITE_API_SECRET = 'wm1psj4mwwwxamopfck6iq08dr1vxf70';
 
 export default async function callback(req: NextApiRequest, res: NextApiResponse) {
   try {

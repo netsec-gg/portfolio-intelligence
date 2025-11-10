@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import { logger } from '../../../lib/logger';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 const KITE_API_BASE = 'https://api.kite.trade';
 const HARDCODED_API_KEY = 'f284nayjeebjjha0';
@@ -25,10 +27,30 @@ export default async function handler(
   }
 
   try {
-    const { token, symbol, exchange, quantity, transactionType, orderType, product, price } = req.body;
+    let { token, symbol, exchange, quantity, transactionType, orderType, product, price } = req.body;
 
-    if (!token || !symbol || !quantity || !transactionType || !orderType || !product || !exchange) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // If token is not provided, try to load from kite-config.json
+    if (!token) {
+      try {
+        const configPath = join(process.cwd(), 'kite-config.json');
+        if (existsSync(configPath)) {
+          const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+          token = config.accessToken || '';
+        }
+      } catch (e) {
+        logger.warn('Could not load token from kite-config.json:', e);
+      }
+    }
+
+    if (!token) {
+      return res.status(400).json({ 
+        error: 'Access token required. Please authenticate via OAuth first.',
+        authUrl: '/api/oauth/authorize'
+      });
+    }
+
+    if (!symbol || !quantity || !transactionType || !orderType || !product || !exchange) {
+      return res.status(400).json({ error: 'Missing required fields: symbol, quantity, transactionType, orderType, product, exchange' });
     }
 
     const auth = getKiteAuth(token);

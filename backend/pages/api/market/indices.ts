@@ -55,9 +55,19 @@ export default async function handler(
       // Use defaults
     }
 
+    // Prevent caching for real-time data
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Timestamp', Date.now().toString());
+
     res.status(200).json({ nifty50, sensex });
   } catch (err) {
     // Return default values on error
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     res.status(200).json({
       nifty50: { value: 25613, change: 15.5, changePercent: 0.06 },
       sensex: { value: 83760, change: 300, changePercent: 0.36 },

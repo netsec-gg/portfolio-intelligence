@@ -92,7 +92,8 @@ export default function PortfolioPage() {
   useEffect(() => {
     if (authenticated) {
       fetchPortfolio();
-      const interval = setInterval(fetchPortfolio, 30000);
+      // Update every 500ms (2 times per second) to match Zerodha Kite frequency
+      const interval = setInterval(fetchPortfolio, 500);
       return () => clearInterval(interval);
     }
   }, [authenticated]);
@@ -132,13 +133,26 @@ export default function PortfolioPage() {
         return;
       }
 
-      const portfolioRes = await fetch(`/api/portfolio/overview?token=${encodeURIComponent(kiteToken)}`);
+      const portfolioRes = await fetch(`/api/portfolio/overview?token=${encodeURIComponent(kiteToken)}&_t=${Date.now()}`);
       
       if (portfolioRes.ok) {
         const portfolioData = await portfolioRes.json();
         
         if (portfolioData.error && portfolioData.authUrl) {
-          window.location.href = '/api/oauth/authorize';
+          console.warn('Portfolio auth error:', portfolioData.error);
+          if (!window.location.href.includes('/api/oauth/authorize')) {
+            alert('Your session has expired. Please re-authenticate to view your portfolio.');
+            window.location.href = '/api/oauth/authorize';
+          }
+          return;
+        }
+        
+        if (portfolioRes.status === 401) {
+          console.warn('Unauthorized - redirecting to auth');
+          if (!window.location.href.includes('/api/oauth/authorize')) {
+            alert('Authentication required. Redirecting to login...');
+            window.location.href = '/api/oauth/authorize';
+          }
           return;
         }
         
@@ -208,13 +222,16 @@ export default function PortfolioPage() {
   return (
     <>
       <Head>
-        <title>Portfolio - Portify</title>
+        <title>Portfolio - Portify | Portfolio Intelligence</title>
       </Head>
       <div className="min-h-screen netsec-bg neon-green-text">
         {/* Header */}
         <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold neon-green neon-glow">PORTIFY</h1>
+            <div>
+              <h1 className="text-3xl font-bold neon-green neon-glow">PORTIFY</h1>
+              <p className="text-sm text-gray-400 mt-1">portfolio intelligence</p>
+            </div>
             <div className="flex items-center space-x-4">
               <Link href="/" className="px-4 py-2 neon-bg-button rounded font-medium">
                 Dashboard

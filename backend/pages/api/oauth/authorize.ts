@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// Hardcoded API key for now
-const KITE_API_KEY = process.env.KITE_API_KEY || 'f284nayjeebjjha0';
+// Hardcoded API key
+const KITE_API_KEY = 'f284nayjeebjjha0';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export default function authorize(req: NextApiRequest, res: NextApiResponse) {

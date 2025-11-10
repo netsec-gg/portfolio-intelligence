@@ -18,7 +18,7 @@ function Error({ statusCode, hasGetInitialPropsRun, err }: ErrorProps) {
   return (
     <>
       <Head>
-        <title>Error - Portify</title>
+        <title>Error - Portify | Portfolio Intelligence</title>
       </Head>
       <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'monospace', background: '#1A1A1A', color: '#00FF80', minHeight: '100vh' }}>
         <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>

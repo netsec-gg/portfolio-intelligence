@@ -170,6 +170,12 @@ export default async function handler(
     // Sort by timestamp (newest first)
     tickerItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+    // Prevent caching for real-time data
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Timestamp', Date.now().toString());
+
     res.status(200).json({ ticker: tickerItems.slice(0, 100) });
   } catch (err) {
     logger.error('Ticker feed error:', err);

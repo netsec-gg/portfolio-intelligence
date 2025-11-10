@@ -87,22 +87,26 @@ export default function NotificationsPage() {
   return (
     <>
       <Head>
-        <title>Daily Notifications - Portify</title>
+        <title>Daily Notifications - Portify | Portfolio Intelligence</title>
       </Head>
       <div className="min-h-screen netsec-bg">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
+        {/* Header */}
+        <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold neon-green neon-glow mb-2">Daily Notifications</h1>
-              <p className="text-gray-400">All notifications for the selected trading day</p>
+              <h1 className="text-3xl font-bold neon-green neon-glow">PORTIFY</h1>
+              <p className="text-sm text-gray-400 mt-1">portfolio intelligence</p>
             </div>
-            <Link
-              href="/"
-              className="px-4 py-2 neon-bg-button rounded-lg hover:neon-bg-button-selected transition-all"
-            >
-              ← Back to Dashboard
+            <Link href="/" className="px-4 py-2 neon-bg-button rounded font-medium">
+              Dashboard
             </Link>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-8">
+          {/* Page Title */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold neon-green neon-glow mb-2">Daily Notifications</h2>
+            <p className="text-gray-400">All notifications for the selected trading day</p>
           </div>
 
           {/* Date Selector */}

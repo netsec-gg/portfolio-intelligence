@@ -46,11 +46,8 @@ export default async function handler(
       openaiStatus = 'unhealthy';
     }
 
-    // Check Kite API configuration
+    // Check Kite API configuration (hardcoded, so always healthy)
     let kiteStatus: 'healthy' | 'unhealthy' = 'healthy';
-    if (!process.env.KITE_API_KEY || !process.env.KITE_API_SECRET) {
-      kiteStatus = 'unhealthy';
-    }
 
     // Memory usage
     const memoryUsage = process.memoryUsage();
